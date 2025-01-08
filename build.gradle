@@ -1,0 +1,36 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+        google()
+        maven { url "https://jitpack.io" }
+        maven { url 'https://maven.aliyun.com/repository/releases' }
+        maven { url 'https://maven.aliyun.com/repository/jcenter' }
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/central' }
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:8.7.3" // 对应 agp 版本
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0' // 对应 kotlin 版本
+    }
+}
+allprojects {
+    repositories {
+        mavenCentral()
+        jcenter()
+        google()
+        maven { url "https://jitpack.io" }
+        maven { url 'https://maven.aliyun.com/repository/releases' }
+        maven { url 'https://maven.aliyun.com/repository/jcenter' }
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/central' }
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+    }
+
+}
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

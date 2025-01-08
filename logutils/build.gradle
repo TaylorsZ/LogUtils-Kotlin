@@ -1,0 +1,53 @@
+plugins {
+    id "com.android.library" // Android Library 插件
+    id "org.jetbrains.kotlin.android" // Kotlin 插件
+    id "maven-publish" // 发布到 Maven
+}
+
+android {
+    namespace 'com.taylorz.logutils' // 替换为你的命名空间
+    compileSdk 34
+
+    defaultConfig {
+        minSdk 26 // 最低支持的 Android 版本
+        targetSdk 34 // 目标 Android 版本
+        versionCode 1 // 版本号
+        versionName "1.0.0" // 版本名
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false // 是否启用代码混淆
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17 // 指定 JVM 目标版本
+    }
+}
+
+dependencies {
+    // AndroidX 核心库
+    implementation "androidx.core:core-ktx:1.12.0"
+
+    // Lifecycle
+    implementation 'androidx.lifecycle:lifecycle-runtime:2.4.0'
+
+    // Gson
+    implementation 'com.google.code.gson:gson:2.8.8'
+}
+
+afterEvaluate {
+    android.libraryVariants.each {variant->
+        publishing.publications.create(variant.name,MavenPublication){
+            from components.findByName(variant.name)
+            groupId = "com.taylorz"
+            artifactId = 'logutils'
+            version = '1.0.0'//自定义
+        }
+    }
+}
