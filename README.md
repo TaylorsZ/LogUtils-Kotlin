@@ -28,11 +28,11 @@ allprojects {
 ```
 
 ### 第二步：添加依赖  
-在模块的 `build.gradle` 中添加以下依赖（将 `username` 替换为你的 GitHub 用户名，`LogUtils` 替换为你的仓库名）：  
+在模块的 `build.gradle` 中添加以下依赖：  
 
 ```groovy  
 dependencies {  
-    implementation 'com.github.username:LogUtils:1.0.0'  
+    implementation 'com.github.TaylorsZ:LogUtils-Kotlin:1.0.0'  
 }  
 ```  
 
@@ -40,7 +40,7 @@ dependencies {
 
 ```kotlin  
 dependencies {  
-    implementation("com.github.username:LogUtils:1.0.0")  
+    implementation("com.github.TaylorsZ:LogUtils-Kotlin:1.0.0")  
 }  
 ```  
 
