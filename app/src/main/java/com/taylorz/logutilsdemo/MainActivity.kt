@@ -2,6 +2,7 @@ package com.taylorz.logutilsdemo
 
 import android.app.Activity
 import android.os.Bundle
+import com.taylorz.logutils.CrashHandler
 import com.taylorz.logutils.LogUtils
 
 
