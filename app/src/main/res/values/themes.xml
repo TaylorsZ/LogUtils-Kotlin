@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.LogUtilsDemo" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- 基于 AppCompat 的主题 -->
+    <style name="Theme.LogUtilsDemo" parent="Theme.AppCompat.Light.DarkActionBar" />
 </resources>
