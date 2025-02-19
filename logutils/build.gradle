@@ -11,8 +11,8 @@ android {
     defaultConfig {
         minSdk 26 // 最低支持的 Android 版本
         targetSdk 34 // 目标 Android 版本
-        versionCode 4 // 版本号
-        versionName "1.0.3" // 版本名
+        versionCode 5 // 版本号
+        versionName "1.0.4" // 版本名
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
