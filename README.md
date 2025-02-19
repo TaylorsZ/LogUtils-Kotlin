@@ -35,7 +35,7 @@ allprojects {
 
 ```groovy
 dependencies {  
-    implementation 'com.github.TaylorsZ:LogUtils-Kotlin:1.0.2'  
+    implementation 'com.github.TaylorsZ:LogUtils-Kotlin:1.0.3'  
 }  
 ```
 
@@ -43,7 +43,7 @@ dependencies {
 
 ```kotlin
 dependencies {  
-    implementation("com.github.TaylorsZ:LogUtils-Kotlin:1.0.2")  
+    implementation("com.github.TaylorsZ:LogUtils-Kotlin:1.0.3")  
 }  
 ```
 

@@ -11,8 +11,8 @@ android {
     defaultConfig {
         minSdk 26 // 最低支持的 Android 版本
         targetSdk 34 // 目标 Android 版本
-        versionCode 3 // 版本号
-        versionName "1.0.2" // 版本名
+        versionCode 4 // 版本号
+        versionName "1.0.3" // 版本名
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -22,11 +22,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17 // 指定 JVM 目标版本
+        jvmTarget = JavaVersion.VERSION_1_8// 指定 JVM 目标版本
     }
 }
 
@@ -39,7 +39,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.11.0'
     // AppCompat
     implementation "androidx.appcompat:appcompat:1.7.0"
-    implementation "com.liulishuo.okdownload:filedownloader:1.0.7"
+    implementation 'com.liulishuo.filedownloader:library:1.7.7'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 }
 
@@ -49,7 +49,7 @@ afterEvaluate {
             from components.findByName(variant.name)
             groupId = "com.taylorz"
             artifactId = 'logutils'
-            version = '1.0.2'//自定义
+            version = '1.0.3'//自定义
         }
     }
 }
