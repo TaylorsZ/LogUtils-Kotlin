@@ -12,7 +12,7 @@ android {
         minSdk 26 // 最低支持的 Android 版本
         targetSdk 34 // 目标 Android 版本
         versionCode 6 // 版本号
-        versionName "1.0.5" // 版本名
+        versionName "1.0.6" // 版本名
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
