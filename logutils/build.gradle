@@ -11,8 +11,8 @@ android {
     defaultConfig {
         minSdk 26 // 最低支持的 Android 版本
         targetSdk 34 // 目标 Android 版本
-        versionCode 5 // 版本号
-        versionName "1.0.4" // 版本名
+        versionCode 6 // 版本号
+        versionName "1.0.5" // 版本名
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -22,11 +22,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8// 指定 JVM 目标版本
+        jvmTarget = JavaVersion.VERSION_17// 指定 JVM 目标版本
     }
 }
 
