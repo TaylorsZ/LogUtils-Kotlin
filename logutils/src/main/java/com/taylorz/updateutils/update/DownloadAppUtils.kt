@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.util.Log
 import com.liulishuo.filedownloader.BaseDownloadTask
 import com.liulishuo.filedownloader.FileDownloadLargeFileListener
 import com.liulishuo.filedownloader.FileDownloader
@@ -91,20 +92,18 @@ internal object DownloadAppUtils {
             return
         }
 
-        var filePath = ""
-        (updateInfo.config.apkSavePath.isNotEmpty()).yes {
-            filePath = updateInfo.config.apkSavePath
-        }.no {
+        var filePath = if (updateInfo.config.apkSavePath.isEmpty()) {
+            //            && !Environment.isExternalStorageLegacy()
             // 适配Android10
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !Environment.isExternalStorageLegacy()) {
-                filePath =
-                    (context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)?.absolutePath
-                        ?: "") + "/apk"
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    (context.getExternalFilesDir(null)?.absolutePath
+                        ?: "")
             } else {
                 val packageName = context.packageName
-                filePath =
-                    Environment.getExternalStorageDirectory().absolutePath + "/" + packageName
+                 Environment.getExternalStorageDirectory().absolutePath + "/" + packageName
             }
+        }else {
+            updateInfo.config.apkSavePath
         }
 
         // apk 保存名称
@@ -116,7 +115,7 @@ internal object DownloadAppUtils {
 
         val apkLocalPath = "$filePath/"
 
-        downloadUpdateApkFilePath = apkLocalPath
+        downloadUpdateApkFilePath = apkLocalPath.plus(apkName.plus(".apk"))
 
         SPUtil.putBase(KEY_OF_SP_APK_PATH, downloadUpdateApkFilePath)
 
@@ -163,14 +162,14 @@ internal object DownloadAppUtils {
                     // FileDownloader 下载失败后，再调用 FileDownloadUtil 下载一次
                     // FileDownloader 对码云或者阿里云上的apk文件会下载失败
                     // downloadError(e)
-                    log("下载出错，尝试HTTPURLConnection下载")
+                    log("下载出错，尝试HTTPURLConnection下载: ${task.errorCause.message}")
                     downloadUpdateApkFilePath.deleteFile()
                     "$downloadUpdateApkFilePath.temp".deleteFile()
                     downloadByHttpUrlConnection(filePath, apkName)
                 }
 
                 override fun warn(task: BaseDownloadTask) {
-                    log("下载出错，尝试HTTPURLConnection下载")
+                    log("下载出错，尝试HTTPURLConnection下载：${task.errorCause.message}")
                 }
             }).start()
 

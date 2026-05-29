@@ -19,14 +19,13 @@ import java.io.IOException
 import java.io.StringReader
 import java.io.StringWriter
 import java.lang.reflect.ParameterizedType
-import java.nio.file.FileSystems
-import java.text.ParseException
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import java.util.regex.Pattern
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import java.util.regex.Pattern
 import javax.xml.transform.OutputKeys
 import javax.xml.transform.Source
 import javax.xml.transform.TransformerFactory
@@ -43,8 +42,8 @@ class LogUtils private constructor(){
     }
 
     class Config {
-        val defaultDir: String =
-            LogHelpr.application.filesDir.toString() + FILE_SEP + "log" + FILE_SEP // The default storage directory of log.
+        val defaultDir: String
+            get() = (UtilsBridge.getAppContext()?.filesDir?.toString() ?: "") + FILE_SEP + "log" + FILE_SEP // The default storage directory of log.
 
         var filePrefix: String = "util" // The file prefix of log.
             set(value) {
@@ -103,7 +102,7 @@ class LogUtils private constructor(){
                 return field.replace(":", "_")
             }
 
-        var dir: String=""
+        var dir: String= defaultDir
             set(value) {
                 field = if (UtilsBridge.isSpace(value)) {
                     ""
@@ -407,18 +406,21 @@ class LogUtils private constructor(){
         private const val JSON = 0x20
         private const val XML = 0x30
 
-        private val FILE_SEP: String = FileSystems.getDefault().getSeparator()
+        private val FILE_SEP: String = File.separator
         private val LINE_SEP: String = System.lineSeparator()
+        private val LOG_DATE_PATTERN = Pattern.compile("[0-9]{4}_[0-9]{2}_[0-9]{2}")
         private const val TOP_CORNER = "┌"
+        private const val TOP_RIGHT_CORNER = "┐"
         private const val MIDDLE_CORNER = "├"
+        private const val MIDDLE_RIGHT_CORNER = "┤"
         private const val LEFT_BORDER = "│ "
+        private const val RIGHT_BORDER = " │"
         private const val BOTTOM_CORNER = "└"
-        private const val SIDE_DIVIDER = "────────────────────────────────────────────────────────"
-        private const val MIDDLE_DIVIDER =
-            "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄"
-        private const val TOP_BORDER = TOP_CORNER + SIDE_DIVIDER + SIDE_DIVIDER
-        private const val MIDDLE_BORDER = MIDDLE_CORNER + MIDDLE_DIVIDER + MIDDLE_DIVIDER
-        private const val BOTTOM_BORDER = BOTTOM_CORNER + SIDE_DIVIDER + SIDE_DIVIDER
+        private const val BOTTOM_RIGHT_CORNER = "┘"
+        private const val BORDER_CONTENT_LENGTH = 110
+        private val TOP_BORDER = createBorder(TOP_CORNER, "─", TOP_RIGHT_CORNER)
+        private val MIDDLE_BORDER = createBorder(MIDDLE_CORNER, "┄", MIDDLE_RIGHT_CORNER)
+        private val BOTTOM_BORDER = createBorder(BOTTOM_CORNER, "─", BOTTOM_RIGHT_CORNER)
         private const val MAX_LEN = 1100 // fit for Chinese character
         private const val NOTHING = "log nothing"
         private const val NULL = "null"
@@ -711,7 +713,7 @@ class LogUtils private constructor(){
             msg: String
         ) {
             if (config.isSingleTagSwitch) {
-                printSingleTagMsg(type, tag, processSingleTagMsg(type, tag, head, msg))
+                printSingleTagMsg(type, tag, processSingleTagMsg(head, msg))
             } else {
                 printBorder(type, tag, true)
                 printHead(type, tag, head)
@@ -726,13 +728,16 @@ class LogUtils private constructor(){
             }
         }
 
+        private fun createBorder(left: String, divider: String, right: String): String {
+            return left + divider.repeat(BORDER_CONTENT_LENGTH + 2) + right
+        }
+
         private fun printHead(type: Int, tag: String, head: Array<String>?) {
             if (head != null) {
                 for (aHead in head) {
-                    print2Console(
-                        type, tag,
-                        (if (config.isLogBorderSwitch) LEFT_BORDER + aHead else aHead)
-                    )
+                    formatBorderLines(aHead).forEach { line ->
+                        print2Console(type, tag, line)
+                    }
                 }
                 if (config.isLogBorderSwitch) print2Console(type, tag, MIDDLE_BORDER)
             }
@@ -763,13 +768,87 @@ class LogUtils private constructor(){
             val lines =
                 msg.split(LINE_SEP.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
             for (line in lines) {
-                print2Console(type, tag, LEFT_BORDER + line)
+                formatBorderLines(line).forEach { borderLine ->
+                    print2Console(type, tag, borderLine)
+                }
             }
         }
 
+        private fun formatBorderLines(line: String): List<String> {
+            if (!config.isLogBorderSwitch) return listOf(line)
+            if (line.isEmpty()) return listOf(formatBorderLine(line))
+            return line.chunkedByDisplayWidth(BORDER_CONTENT_LENGTH).map { formatBorderLine(it) }
+        }
+
+        private fun formatBorderLine(line: String): String {
+            if (!config.isLogBorderSwitch) return line
+            return LEFT_BORDER + line.padEndByDisplayWidth(BORDER_CONTENT_LENGTH) + RIGHT_BORDER
+        }
+
+        private fun String.chunkedByDisplayWidth(maxWidth: Int): List<String> {
+            val result = mutableListOf<String>()
+            val builder = StringBuilder()
+            var width = 0
+            var index = 0
+            while (index < length) {
+                val codePoint = codePointAt(index)
+                val text = String(Character.toChars(codePoint))
+                val textWidth = codePoint.displayWidth()
+                if (builder.isNotEmpty() && width + textWidth > maxWidth) {
+                    result.add(builder.toString())
+                    builder.clear()
+                    width = 0
+                }
+                builder.append(text)
+                width += textWidth
+                index += Character.charCount(codePoint)
+            }
+            if (builder.isNotEmpty()) result.add(builder.toString())
+            return result
+        }
+
+        private fun String.padEndByDisplayWidth(width: Int): String {
+            val padCount = width - displayWidth()
+            return if (padCount > 0) this + " ".repeat(padCount) else this
+        }
+
+        private fun String.displayWidth(): Int {
+            var width = 0
+            var index = 0
+            while (index < length) {
+                val codePoint = codePointAt(index)
+                width += codePoint.displayWidth()
+                index += Character.charCount(codePoint)
+            }
+            return width
+        }
+
+        private fun Int.displayWidth(): Int {
+            if (this == '\t'.code) return 4
+            val type = Character.getType(this)
+            if (
+                type == Character.NON_SPACING_MARK.toInt() ||
+                type == Character.ENCLOSING_MARK.toInt() ||
+                type == Character.FORMAT.toInt()
+            ) return 0
+            val block = Character.UnicodeBlock.of(this)
+            return if (
+                block == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS ||
+                block == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A ||
+                block == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B ||
+                block == Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS ||
+                block == Character.UnicodeBlock.CJK_SYMBOLS_AND_PUNCTUATION ||
+                block == Character.UnicodeBlock.HALFWIDTH_AND_FULLWIDTH_FORMS ||
+                block == Character.UnicodeBlock.HIRAGANA ||
+                block == Character.UnicodeBlock.KATAKANA ||
+                block == Character.UnicodeBlock.HANGUL_SYLLABLES ||
+                block == Character.UnicodeBlock.HANGUL_JAMO ||
+                block == Character.UnicodeBlock.HANGUL_COMPATIBILITY_JAMO ||
+                type == Character.OTHER_SYMBOL.toInt()
+            ) 2 else 1
+        }
+
         private fun processSingleTagMsg(
-            type: Int,
-            tag: String,
             head: Array<String>?,
             msg: String
         ): String {
@@ -779,13 +858,13 @@ class LogUtils private constructor(){
                 sb.append(TOP_BORDER).append(LINE_SEP)
                 if (head != null) {
                     for (aHead in head) {
-                        sb.append(LEFT_BORDER).append(aHead).append(LINE_SEP)
+                        appendBorderLines(sb, aHead)
                     }
                     sb.append(MIDDLE_BORDER).append(LINE_SEP)
                 }
                 for (line in msg.split(LINE_SEP.toRegex()).dropLastWhile { it.isEmpty() }
                     .toTypedArray()) {
-                    sb.append(LEFT_BORDER).append(line).append(LINE_SEP)
+                    appendBorderLines(sb, line)
                 }
                 sb.append(BOTTOM_BORDER)
             } else {
@@ -800,45 +879,49 @@ class LogUtils private constructor(){
             return sb.toString()
         }
 
+        private fun appendBorderLines(sb: StringBuilder, line: String) {
+            formatBorderLines(line).forEach {
+                sb.append(it).append(LINE_SEP)
+            }
+        }
+
         private fun printSingleTagMsg(type: Int, tag: String, msg: String) {
+            if (config.isLogBorderSwitch) {
+                printBorderMsgByLine(type, tag, msg)
+                return
+            }
             val len = msg.length
-            val countOfSub =
-                if (config.isLogBorderSwitch) (len - BOTTOM_BORDER.length) / MAX_LEN else len / MAX_LEN
+            val countOfSub = len / MAX_LEN
             if (countOfSub > 0) {
-                if (config.isLogBorderSwitch) {
-                    print2Console(type, tag, msg.substring(0, MAX_LEN) + LINE_SEP + BOTTOM_BORDER)
-                    var index = MAX_LEN
-                    for (i in 1 until countOfSub) {
-                        print2Console(
-                            type, tag, (PLACEHOLDER + LINE_SEP + TOP_BORDER + LINE_SEP
-                                    + LEFT_BORDER + msg.substring(index, index + MAX_LEN)
-                                    + LINE_SEP + BOTTOM_BORDER)
-                        )
-                        index += MAX_LEN
-                    }
-                    if (index != len - BOTTOM_BORDER.length) {
-                        print2Console(
-                            type, tag, (PLACEHOLDER + LINE_SEP + TOP_BORDER + LINE_SEP
-                                    + LEFT_BORDER + msg.substring(index, len))
-                        )
-                    }
-                } else {
-                    print2Console(type, tag, msg.substring(0, MAX_LEN))
-                    var index = MAX_LEN
-                    for (i in 1 until countOfSub) {
-                        print2Console(
-                            type, tag,
-                            PLACEHOLDER + LINE_SEP + msg.substring(index, index + MAX_LEN)
-                        )
-                        index += MAX_LEN
-                    }
-                    if (index != len) {
-                        print2Console(type, tag, PLACEHOLDER + LINE_SEP + msg.substring(index, len))
-                    }
+                print2Console(type, tag, msg.substring(0, MAX_LEN))
+                var index = MAX_LEN
+                for (i in 1 until countOfSub) {
+                    print2Console(
+                        type, tag,
+                        PLACEHOLDER + LINE_SEP + msg.substring(index, index + MAX_LEN)
+                    )
+                    index += MAX_LEN
+                }
+                if (index != len) {
+                    print2Console(type, tag, PLACEHOLDER + LINE_SEP + msg.substring(index, len))
                 }
             } else {
                 print2Console(type, tag, msg)
             }
+        }
+
+        private fun printBorderMsgByLine(type: Int, tag: String, msg: String) {
+            val builder = StringBuilder()
+            msg.split(LINE_SEP).forEach { line ->
+                val nextLen = if (builder.isEmpty()) line.length else builder.length + LINE_SEP.length + line.length
+                if (builder.isNotEmpty() && nextLen > MAX_LEN) {
+                    print2Console(type, tag, builder.toString())
+                    builder.clear()
+                }
+                if (builder.isNotEmpty()) builder.append(LINE_SEP)
+                builder.append(line)
+            }
+            if (builder.isNotEmpty()) print2Console(type, tag, builder.toString())
         }
 
         private fun print2Console(type: Int, tag: String, msg: String) {
@@ -892,7 +975,7 @@ class LogUtils private constructor(){
             if (file.exists()) return file.isFile
             if (!UtilsBridge.createOrExistsDir(file.parentFile)) return false
             try {
-                deleteDueLogs(filePath, date)
+                deleteDueLogs(config.dir, date)
                 val isCreate = file.createNewFile()
                 if (isCreate) {
                     printDeviceInfo(filePath, date)
@@ -907,42 +990,69 @@ class LogUtils private constructor(){
         private fun deleteDueLogs(filePath: String, date: String) {
             if (config.saveDays <= 0) return
 
-            val parentFile = File(filePath).parentFile ?: return
-            val files = parentFile.listFiles { _, name -> isMatchLogFileName(name) }.orEmpty()
+            val logRoot = getLogRoot(File(filePath))
+            val dueDate = getDueDate(date) ?: return
+            logRoot.walkTopDown()
+                .filter { it.isFile }
+                .forEach { file ->
+                    val logDay = findDate(file.name)
+                    if (!isMatchLogFileName(file.name, logDay)) return@forEach
 
-            if (files.isEmpty()) return
-
-            val sdf = SimpleDateFormat("yyyy_MM_dd", Locale.getDefault())
-            val dueMillis = try {
-                sdf.parse(date)?.time?.minus(config.saveDays * 86400000L) ?: return
-            } catch (e: ParseException) {
-                e.printStackTrace()
-                return
-            }
-
-            files.forEach { file ->
-                val logDay = findDate(file.name)
-                try {
-                    if ((sdf.parse(logDay)?.time ?: 0) <= dueMillis) {
-                        EXECUTOR.execute {
-                            if (!file.delete()) {
-                                Log.e("LogUtils", "Failed to delete $file!")
-                            }
+                    if (logDay <= dueDate) {
+                        if (!file.delete()) {
+                            Log.e("LogUtils", "Failed to delete $file!")
+                        } else {
+                            Log.d("LogUtils", "Successfully deleted $file!")
                         }
                     }
-                } catch (e: ParseException) {
-                    e.printStackTrace()
                 }
+
+            deleteEmptyLogDirs(logRoot)
+        }
+
+        private fun getLogRoot(logDir: File): File {
+            val dirName = logDir.name
+            return if (LOG_DATE_PATTERN.matcher(dirName).matches()) {
+                logDir.parentFile ?: logDir
+            } else {
+                logDir
             }
+        }
+
+        private fun getDueDate(date: String): String? {
+            return try {
+                val calendar = Calendar.getInstance()
+                calendar.time = SimpleDateFormat("yyyy_MM_dd", Locale.getDefault()).parse(date) ?: return null
+                calendar.add(Calendar.DAY_OF_YEAR, -config.saveDays)
+                SimpleDateFormat("yyyy_MM_dd", Locale.getDefault()).format(calendar.time)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
+        }
+
+        private fun deleteEmptyLogDirs(logRoot: File) {
+            logRoot.walkBottomUp()
+                .filter { it.isDirectory && it != logRoot && it.list()?.isEmpty() == true }
+                .forEach { dir ->
+                    if (!dir.delete()) {
+                        Log.e("LogUtils", "Failed to delete empty dir $dir!")
+                    } else {
+                        Log.d("LogUtils", "Successfully deleted empty dir $dir!")
+                    }
+                }
         }
 
         private fun isMatchLogFileName(name: String): Boolean {
-            return name.matches(("^" + config.filePrefix + "_[0-9]{4}_[0-9]{2}_[0-9]{2}_.*$").toRegex())
+            return isMatchLogFileName(name, findDate(name))
+        }
+
+        private fun isMatchLogFileName(name: String, logDay: String): Boolean {
+            return logDay.isNotEmpty() && name.endsWith(config.fileExtension)
         }
 
         private fun findDate(str: String): String {
-            val pattern = Pattern.compile("[0-9]{4}_[0-9]{2}_[0-9]{2}")
-            val matcher = pattern.matcher(str)
+            val matcher = LOG_DATE_PATTERN.matcher(str)
             if (matcher.find()) {
                 return matcher.group()
             }

@@ -1,6 +1,8 @@
 package com.taylorz.logutils
 
 import android.annotation.SuppressLint
+import android.app.Application
+import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
@@ -8,6 +10,28 @@ import android.text.TextUtils
 import java.io.File
 
 object UtilsBridge {
+    private var appContext: Context? = null
+
+    fun init(context: Context) {
+        appContext = context.applicationContext
+    }
+
+    fun getAppContext(): Context? {
+        appContext?.let { return it }
+        return getApplicationByReflect()?.also { appContext = it }
+    }
+
+    @SuppressLint("PrivateApi")
+    private fun getApplicationByReflect(): Application? {
+        return try {
+            val activityThread = Class.forName("android.app.ActivityThread")
+            val currentApplication = activityThread.getMethod("currentApplication")
+            currentApplication.invoke(null) as? Application
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     object MemoryConstants {
         const val BYTE: Int = 1
         const val KB: Int = 1024
@@ -155,13 +179,19 @@ object UtilsBridge {
         @SuppressLint("NewApi")
         fun getAppVersionInfo(): Pair<String, Int> {
             return try {
-                val packageInfo: PackageInfo = LogHelpr.application.packageManager.getPackageInfo(
-                    LogHelpr.application.packageName,
+                val context = getAppContext() ?: return Pair("Unknown", -1)
+                val packageInfo: PackageInfo = context.packageManager.getPackageInfo(
+                    context.packageName,
                     0
                 )
                 val versionName = packageInfo.versionName
-                val versionCode =
-                    packageInfo.longVersionCode.toInt() // For API 28+ use longVersionCode
+                val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    packageInfo.longVersionCode.toInt()
+                } else {
+                    @Suppress("DEPRECATION")
+                    packageInfo.versionCode.toInt()
+                }
+
                 Pair(versionName, versionCode)
             } catch (e: PackageManager.NameNotFoundException) {
                 e.printStackTrace()

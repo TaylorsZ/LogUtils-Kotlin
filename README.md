@@ -35,7 +35,7 @@ allprojects {
 
 ```groovy
 dependencies {  
-    implementation 'com.github.TaylorsZ:LogUtils-Kotlin:1.0.6'  
+    implementation 'com.github.TaylorsZ:LogUtils-Kotlin:1.0.7'  
 }  
 ```
 
@@ -43,26 +43,13 @@ dependencies {
 
 ```kotlin
 dependencies {  
-    implementation("com.github.TaylorsZ:LogUtils-Kotlin:1.0.6")  
+    implementation("com.github.TaylorsZ:LogUtils-Kotlin:1.0.7")  
 }  
 ```
 
 ---
 
 ## 使用方法
-
-### 初始化
-
-在应用的 `Application` 类中初始化库（可选设置默认 TAG）：
-
-```kotlin
-class MyApp : Application() {  
-    override fun onCreate() {  
-        super.onCreate()
-        LogHelpr().init(this)
-    }  
-}  
-```
 
 ### 打印日志
 

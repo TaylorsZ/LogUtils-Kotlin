@@ -19,6 +19,7 @@ import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.util.Collections
 import javax.net.ssl.HttpsURLConnection
+import androidx.core.net.toUri
 
 /**
  * <pre>
@@ -77,9 +78,9 @@ object FileUtils {
     private fun isFileExistsApi29(filePath: String?): Boolean {
         if (Build.VERSION.SDK_INT >= 29) {
             try {
-                val uri = Uri.parse(filePath)
-                val cr = LogHelpr.application.contentResolver
-                val afd = cr?.openAssetFileDescriptor(uri, "r") ?: return false
+                val uri = filePath?.toUri()
+                val cr = UtilsBridge.getAppContext()?.contentResolver
+                val afd = uri?.let { cr?.openAssetFileDescriptor(it, "r") } ?: return false
                 try {
                     afd.close()
                 } catch (ignore: IOException) {
@@ -1410,7 +1411,7 @@ object FileUtils {
         if (file == null || !file.exists()) return
         val intent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
         intent.setData(Uri.parse("file://" + file.absolutePath))
-        LogHelpr.application.sendBroadcast(intent)
+        UtilsBridge.getAppContext()?.sendBroadcast(intent)
     }
 
     /**
@@ -1457,4 +1458,3 @@ object FileUtils {
         return blockSize * availableSize
     }
 }
-

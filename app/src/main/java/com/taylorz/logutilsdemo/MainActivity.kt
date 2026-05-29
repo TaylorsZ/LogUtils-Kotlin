@@ -9,6 +9,9 @@ import listener.UpdateDownloadListener
 import model.UiConfig
 import model.UpdateConfig
 import update.UpdateAppUtils
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 
 class MainActivity : AppCompatActivity() {
@@ -16,9 +19,15 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        if (!StoragePermissionUtils.hasStoragePermission(this)) {
+
+            StoragePermissionUtils.requestStoragePermission(this)
+
+        }
+
 //        LogUtils.init(this)
-        val config = LogUtils.config
-        config.globalTag = "测试"
+
         LogUtils.d("开始")
 //        val data = mapOf<String, String>(
 //            "name" to "taylorz"
