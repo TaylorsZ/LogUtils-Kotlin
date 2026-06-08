@@ -1,97 +1,117 @@
 # LogUtils
 
-一个基于 Kotlin 开发的轻量级 Android 日志库，修改自知名项目 [AndroidUtilCode](https://github.com/Blankj/AndroidUtilCode) 中的 `LogUtils` 模块。
+基于 Kotlin 的轻量级 Android 日志库，修改自 [AndroidUtilCode](https://github.com/Blankj/AndroidUtilCode) 的 `LogUtils` 模块，并集成了 [UpdateAppUtils](https://github.com/teprinciple/UpdateAppUtils) 的 Kotlin 重构版。
 
 ---
 
 ## 功能特点
 
-- 基于 Kotlin 的实现，简洁高效。
-- 支持多种日志级别（如：`debug`、`error`、`info`）。
-- 可自定义日志 TAG，方便日志筛选和管理。
-- 提供现代 Android 开发所需的最小化设计。
+- 纯 Kotlin 实现，简洁高效
+- 支持 `d` / `i` / `w` / `e` / `json` 等多种日志级别
+- 支持日志写入文件，按日期自动分目录
+- 可自动清理过期日志（`saveDays`）
+- 可自定义日志 TAG、文件前缀、扩展名
+- 包含应用内更新功能（UpdateAppUtils）
 
 ---
 
-## 安装方法
+## 安装
 
-本库已托管在 [JitPack](https://jitpack.io)。按照以下步骤集成到项目中：
+### Step 1: 添加 JitPack 仓库
 
-### 第一步：添加 JitPack 仓库
-
-在项目的 `build.gradle`（项目根目录）中添加：
+项目根目录 `settings.gradle` 或 `build.gradle` 中：
 
 ```groovy
-allprojects {  
-    repositories {  
-        maven { url 'https://jitpack.io' }  
-    }  
-}  
+repositories {
+    maven { url 'https://jitpack.io' }
+}
 ```
 
-### 第二步：添加依赖
-
-在模块的 `build.gradle` 中添加以下依赖：
+### Step 2: 添加依赖
 
 ```groovy
-dependencies {  
-    implementation 'com.github.TaylorsZ:LogUtils-Kotlin:1.0.7'  
-}  
-```
-
-如果你使用的是 Kotlin DSL（`build.gradle.kts`），请添加以下代码：
-
-```kotlin
-dependencies {  
-    implementation("com.github.TaylorsZ:LogUtils-Kotlin:1.0.7")  
-}  
+dependencies {
+    implementation 'com.taylorz:logutils:1.1.1'
+}
 ```
 
 ---
 
 ## 使用方法
 
-### 打印日志
-
-直接调用日志方法即可：
+### 初始化（Application 中）
 
 ```kotlin
-LogUtils.d("这是一个调试日志")  
-LogUtils.e("这是一个错误日志")  
-LogUtils.i("这是一个信息日志")  
+class App : Application() {
+    override fun onCreate() {
+        super.onCreate()
+
+        val config = LogUtils.config
+        config.globalTag = "MyApp"           // 全局 TAG
+        config.isLogSwitch = true            // 日志总开关
+        config.isLog2FileSwitch = true       // 写入文件开关
+        config.saveDays = 7                  // 日志保留天数
+
+        // 自定义日志存储目录（需要存储权限，见下方说明）
+        config.dir = Environment.getExternalStorageDirectory().absolutePath + "/MyLogs/"
+        config.filePrefix = "app"            // 文件名前缀
+        config.fileExtension = ".log"        // 文件扩展名
+
+        // 应用内更新初始化
+        UpdateAppUtils.init(this)
+    }
+}
 ```
 
-### 完整示例
+### 打印日志
 
 ```kotlin
-fun main() {  
-    // 初始化日志库  
-    LogUtils.init("DemoApp")  
+LogUtils.d("调试信息")
+LogUtils.i("普通信息")
+LogUtils.w("警告信息")
+LogUtils.e("错误信息")
+LogUtils.json("{ \"key\": \"value\" }")
+```
 
-    // 打印不同级别的日志  
-    LogUtils.d("调试日志内容")  
-    LogUtils.i("信息日志内容")  
-    LogUtils.w("警告日志内容")  
-    LogUtils.e("错误日志内容")  
-}  
+### 打印异常
+
+```kotlin
+try {
+    // ...
+} catch (e: Exception) {
+    LogUtils.e(e)
+}
 ```
 
 ---
 
-## 项目来源
+## 存储权限说明
 
-本项目基于 [Blankj/AndroidUtilCode](https://github.com/Blankj/AndroidUtilCode) 的 `LogUtils` 模块进行了 Kotlin 重构和优化，更适合现代 Android 开发需求。
+如果日志目录使用 `Environment.getExternalStorageDirectory()`，需要处理分区存储权限：
 
-本项目基于 [teprinciple/UpdateAppUtils](https://github.com/teprinciple/UpdateAppUtils) 进行了 Kotlin 重构和优化，适配targetSDK=34。
+- **Android 10**：Manifest 中需添加 `android:requestLegacyExternalStorage="true"`
+- **Android 11+**：需用户在系统设置中授予"所有文件访问权限"
+
+或使用应用专属目录（无需权限）：`getExternalFilesDir(null)?.absolutePath`
+
+---
+
+## 应用内更新
+
+```kotlin
+UpdateAppUtils.getInstance()
+    .apkUrl("https://example.com/app.apk")
+    .updateTitle("发现新版本")
+    .updateContent("- 修复已知问题\n- 优化体验")
+    .updateConfig(UpdateConfig().apply {
+        serverVersionCode = 2
+        serverVersionName = "1.2.0"
+    })
+    .update()
+```
 
 ---
 
 ## 许可证
 
-本项目使用 MIT 许可证。详情请参阅 [LICENSE](LICENSE) 文件。
-
----
-
-## 问题反馈
-
-如果你在使用过程中遇到问题或有功能需求，欢迎在 GitHub 仓库提交 Issue。
+MIT License
