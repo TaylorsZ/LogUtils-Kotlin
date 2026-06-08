@@ -1,5 +1,6 @@
 package com.taylorz.logutilsdemo
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.taylorz.logutils.LogUtils
@@ -16,30 +17,46 @@ import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
     val downloadUrl = "https://www.pgyer.com/app/installUpdate/8824dd549d717ea031647aa41098059a?sig=14%2B8Un572jK2Pa5UlUPCZ5dELVGdH2YMtlAJd7Z4cpTS1pR5%2BmuA69GkNEQKw0zN&forceHttps="
+
+    private var initLogged = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         if (!StoragePermissionUtils.hasStoragePermission(this)) {
-
             StoragePermissionUtils.requestStoragePermission(this)
-
+        } else {
+            doInitLog()
         }
+    }
 
-//        LogUtils.init(this)
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == StoragePermissionUtils.REQUEST_CODE_MANAGE_STORAGE) {
+            if (StoragePermissionUtils.hasStoragePermission(this)) {
+                doInitLog()
+            }
+        }
+    }
 
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == StoragePermissionUtils.REQUEST_CODE_STORAGE) {
+            if (StoragePermissionUtils.hasStoragePermission(this)) {
+                doInitLog()
+            }
+        }
+    }
+
+    private fun doInitLog() {
+        if (initLogged) return
+        initLogged = true
         LogUtils.d("开始")
-//        val data = mapOf<String, String>(
-//            "name" to "taylorz"
-//        )
-//        LogUtils.json("测试啊",data)
-//        try {
-//            val array = arrayOf(1, 2, 3)
-//            val ss = array[4]
-//        }catch (e: Exception){
-//            LogUtils.e(e)
-//        }
-
     }
 
     override fun onAttachedToWindow() {

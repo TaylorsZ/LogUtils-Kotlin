@@ -972,17 +972,29 @@ class LogUtils private constructor(){
 
         private fun createOrExistsFile(filePath: String, date: String): Boolean {
             val file = File(filePath)
-            if (file.exists()) return file.isFile
-            if (!UtilsBridge.createOrExistsDir(file.parentFile)) return false
+            if (file.exists()) {
+                val isF = file.isFile
+                Log.d("LogUtils", "file exists, isFile=$isF: $filePath")
+                return isF
+            }
+            val parent = file.parentFile
+            val dirOk = UtilsBridge.createOrExistsDir(parent)
+            if (!dirOk) {
+                Log.e("LogUtils", "mkdirs failed for parent: $parent (exists=${parent?.exists()}, canWrite=${parent?.canWrite()})")
+                return false
+            }
             try {
-                deleteDueLogs(config.dir, date)
                 val isCreate = file.createNewFile()
+                if (!isCreate) {
+                    Log.e("LogUtils", "createNewFile returned false: $filePath")
+                }
                 if (isCreate) {
                     printDeviceInfo(filePath, date)
+                    deleteDueLogs(config.dir, date)
                 }
                 return isCreate
             } catch (e: IOException) {
-                e.printStackTrace()
+                Log.e("LogUtils", "IOException creating file: $filePath", e)
                 return false
             }
         }

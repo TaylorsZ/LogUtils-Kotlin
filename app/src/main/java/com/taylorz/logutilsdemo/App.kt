@@ -27,7 +27,7 @@ class App: Application() {
         val date = Date()
         config.filePrefix = dateFormat.format(date)
 
-        val dateFormat2 = SimpleDateFormat("YYYY_MM_dd", Locale.CHINA)
+        val dateFormat2 = SimpleDateFormat("yyyy_MM_dd", Locale.CHINA)
         val datelogPath = logPath.plus("/").plus(dateFormat2.format(date))
         config.dir = datelogPath
         Log.d("测试", "测试:${config.dir}")
