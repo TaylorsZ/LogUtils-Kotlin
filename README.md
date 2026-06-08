@@ -28,12 +28,21 @@ repositories {
 ```
 
 ### Step 2: 添加依赖
-
+本地
 ```groovy
 dependencies {
     implementation 'com.taylorz:logutils:1.1.1'
 }
 ```
+
+仓库
+```groovy
+dependencies {
+    implementation 'com.github.TaylorsZ:LogUtils-Kotlin:Tag'
+}
+```
+
+
 
 ---
 
